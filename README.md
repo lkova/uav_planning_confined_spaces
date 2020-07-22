@@ -17,7 +17,7 @@ Exploration
 
 Hole Detection
 
-![](demo_gifs/hole_detection.gif.gif)
+![](demo_gifs/hole_detection.gif)
 
 Visual Odometry
 
