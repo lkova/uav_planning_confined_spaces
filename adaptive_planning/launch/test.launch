@@ -1,0 +1,4 @@
+<launch>
+    <node name="hovering_example" pkg="adaptive_planning" type="hole_point" output="screen"/>
+    <!--node name="point" pkg="adaptive_planning" type="planner" output="screen"/-->
+</launch>

@@ -1,0 +1,4 @@
+camera/horizontal: 90.0
+camera/vertical: 60.0
+camera/min_distance: 0.0
+camera/max_distance: 1.5

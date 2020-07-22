@@ -1,0 +1,34 @@
+<launch>
+    <!-- <node pkg="hole_detection" type="detection" name="detectionDown" output="screen">
+        <param name="subscriber_topic" type="str" value="/firefly/vi_sensor_down/camera_depth/depth/points" />
+        <param name="camera_frame_topic" type="str" value="firefly/vi_sensor_down/camera_depth_optical_center_link" />
+        <param name="debug_vis" type="bool" value="false" />
+        <param name="front" type="bool" value="false" />
+        <param name="manhole_path" type="string" value="/home/luka/uav2_ws/src/adaptive_path_planning_for_uav/hole_detection/resource/manhole.txt"/>
+        <param name ="big_hole_path" type="string" value="/home/luka/uav2_ws/src/adaptive_path_planning_for_uav/hole_detection/resource/bigHoleReal2.txt"/>
+    </node> -->
+    <node pkg="hole_detection" type="detection" name="detectionFront" output="screen">
+        <param name="subscriber_topic" type="str" value="/firefly/vi_sensor/camera_depth/depth/points" />
+        <param name="camera_frame_topic" type="str" value="firefly/vi_sensor/camera_depth_optical_center_link" />
+        <param name="debug_vis" type="bool" value="false" />
+        <param name="front" type="bool" value="true" />
+        <param name="mynteye" type="bool" value="false" />
+        <param name="manhole_path" type="string" value="/home/luka/uav2_ws/src/adaptive_path_planning_for_uav/hole_detection/resource/manhole.txt"/>
+        <param name ="big_hole_path" type="string" value="/home/luka/uav2_ws/src/adaptive_path_planning_for_uav/hole_detection/resource/bigHole.txt"/>
+    </node>
+    <!-- <node pkg="hole_detection" type="detection" name="mynteye" output="screen">
+        <param name="subscriber_topic" type="str" value="/mynteye/points/downsampled_xyz" />
+        <param name="camera_frame_topic" type="str" value="/mynteye_points_frame" />
+        <param name="debug_vis" type="bool" value="false" />
+        <param name="mynteye" type="bool" value="true" />
+        <param name="target_frame" type="str" value="/mynteye_points_frame" />
+        <param name="fx" type="int" value="360" />
+        <param name="fy" type="int" value="360" />
+        <param name="cx" type="int" value="376" />
+        <param name="cy" type="int" value="240" />
+        <param name="obrisi" type="int" value="0" />
+        <param name="manhole_path" type="string" value="/home/luka/outputFile.txt"/>
+        <param name="big_hole_path" type="string" value="/home/luka/bigHoleReal2.txt"/>
+    </node> -->
+    <!--node pkg="my_pcl_tutorial" type="transform_to_world" name="transform" output="screen"/-->
+</launch>

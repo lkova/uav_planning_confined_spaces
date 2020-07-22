@@ -1,0 +1,7 @@
+<launch> 
+    <node pkg="tf" type="static_transform_publisher" name="tank_world" args="1.12 1.38 0.17 1.5707 0.0 0.0 world tank 10"/>
+    <node pkg="tf" type="static_transform_publisher" name="tank_tank1" args="0.0 0.0 0.0 0.0 0.0 0.0 tank tank1 10"/>
+    <node pkg="tf" type="static_transform_publisher" name="tank1_tank2" args="2.46 0.0 0.0 0.0 0.0 0.0 tank1 tank2 10"/>
+    <node pkg= "task_manager" type="ar_transform" name="ar_transform" />
+    <!-- <node pkg= "task_manager" type="alvar" name="alvar" output="screen"/> -->
+</launch>

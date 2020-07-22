@@ -1,0 +1,16 @@
+<launch>
+    <node pkg="hole_detection" type="detection" name="mynteye" output="screen">
+        <param name="subscriber_topic" type="str" value="/mynteye/points/downsampled_xyz" />
+        <param name="camera_frame_topic" type="str" value="/mynteye_points_frame" />
+        <param name="debug_vis" type="bool" value="false" />
+        <param name="mynteye" type="bool" value="true" />
+        <param name="target_frame" type="str" value="/mynteye_points_frame" />
+        <param name="fx" type="int" value="360" />
+        <param name="fy" type="int" value="360" />
+        <param name="cx" type="int" value="376" />
+        <param name="cy" type="int" value="240" />
+        <param name="obrisi" type="int" value="0" />
+        <param name="manhole_path" type="string" value="/home/luka/outputFile.txt"/>
+        <param name="big_hole_path" type="string" value="/home/luka/bigHoleReal2.txt"/>
+    </node>
+</launch>

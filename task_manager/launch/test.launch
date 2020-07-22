@@ -1,0 +1,5 @@
+<launch>
+    <node name="hovering_example" pkg="task_manager" type="hole_point" output="screen"/>
+    <!--include file="$(find octomap_tutorial)/launch/octomap_tutorial.launch"/-->
+    <!--node name="point" pkg="adaptive_planning" type="planner" output="screen"/-->
+</launch>
