@@ -12,10 +12,13 @@ Explanation on how to install everything, run the code, references and other exp
 ## Demos 
 
 Exploration
+
 ![](demo_gifs/exploration_demo.gif)
 
 Hole Detection
-![](demo_gifs/exploration_demo.gif)
+
+![](demo_gifs/hole_detection.gif.gif)
 
 Visual Odometry
+
 ![](demo_gifs/visual_demo.gif)
