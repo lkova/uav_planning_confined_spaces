@@ -11,14 +11,14 @@ Explanation on how to install everything, run the code, references and other exp
 
 ## Demos 
 
-Exploration
+Exploration.
 
 ![](demo_gifs/exploration_demo.gif)
 
-Hole Detection
+Hole Detection.
 
 ![](demo_gifs/hole_detection.gif)
 
-Visual Odometry
+Visual Odometry. Green arrow is the estimated odometry.
 
 ![](demo_gifs/visual_demo.gif)
