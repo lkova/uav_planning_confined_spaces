@@ -147,6 +147,30 @@ namespace hole_detection
     }
   }
 
+  void HoleDetection::multiTest()
+  {
+    std::vector<Plane> planes;
+    multiPlaneSegmentation(cloud_, planes);
+
+    for (Plane plane : planes)
+    {
+
+      bool found = false;
+
+      findHole(plane.cloud, plane.z_plane, plane.R, found, plane.normal);
+
+      if (found)
+      {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud =
+            pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+
+        pcl::copyPointCloud(*plane.cloud, *temp_cloud);
+        pcl::transformPointCloud(*temp_cloud, *temp_cloud, plane.R.inverse());
+        clouds_.push_back(temp_cloud);
+      }
+    }
+  }
+
   void HoleDetection::multiPlaneSegmentation(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<Plane> &planes)
   {
     pcl::ModelCoefficientsPtr coefficients(new pcl::ModelCoefficients);
@@ -215,30 +239,6 @@ namespace hole_detection
       extract.filter(*cloud_f);
       cloud_filtered_.swap(cloud_f);
       i++;
-    }
-  }
-
-  void HoleDetection::multiTest()
-  {
-    std::vector<Plane> planes;
-    multiPlaneSegmentation(cloud_, planes);
-
-    for (Plane plane : planes)
-    {
-
-      bool found = false;
-
-      findHole(plane.cloud, plane.z_plane, plane.R, found, plane.normal);
-
-      if (found)
-      {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud =
-            pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-
-        pcl::copyPointCloud(*plane.cloud, *temp_cloud);
-        pcl::transformPointCloud(*temp_cloud, *temp_cloud, plane.R.inverse());
-        clouds_.push_back(temp_cloud);
-      }
     }
   }
 
