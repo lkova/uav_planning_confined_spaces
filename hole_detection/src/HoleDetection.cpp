@@ -4,7 +4,6 @@ namespace hole_detection
 {
   HoleDetection::HoleDetection()
   {
-    kernel_resolution_ = 7;
     hole_results_ = std::vector<std::vector<Eigen::Vector3d>>();
 
     if (ismynteye_)
@@ -26,6 +25,7 @@ namespace hole_detection
     loadTemplate();
     loadTemplateBigHole();
   }
+
   void HoleDetection::setCloud(const pcl::PCLPointCloud2 &cloud_msg)
   {
     hole_results_.clear();
@@ -136,111 +136,14 @@ namespace hole_detection
     pass.filter(*cloud);
 
     //downsample point cloud
-    double resolution_before = cloud->points.size();
     pcl::VoxelGrid<pcl::PointXYZ> sor;
     sor.setInputCloud(cloud);
     sor.setLeafSize(0.03f, 0.03f, 0.03f);
     sor.filter(*cloud);
 
-    double resolution_after = cloud->points.size();
-    kernel_resolution_ = 0;
-
-    if (!isnan(resolution_before) || resolution_before > 0)
-    {
-      kernel_resolution_ = sqrt(resolution_before / resolution_after) * 2;
-    }
-
     if (cloud->size() > 0)
     {
       pcl::copyPointCloud(*cloud, *cloud_c);
-    }
-  }
-
-  void HoleDetection::planeSegmentation(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double &z_plane,
-                                        Eigen::Affine3d &rotation)
-  {
-    // separate this function later on
-
-    pcl::ModelCoefficientsPtr coefficients(new pcl::ModelCoefficients);
-    pcl::PointIndicesPtr inliers(new pcl::PointIndices);
-    pcl::ExtractIndices<pcl::PointXYZ> extract;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::copyPointCloud(*cloud, *cloud_filtered_);
-
-    pcl::SACSegmentation<pcl::PointXYZ> seg;
-    seg.setModelType(pcl::SACMODEL_PLANE);
-    seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setDistanceThreshold(0.05);
-    seg.setOptimizeCoefficients(true);
-    seg.setMaxIterations(500);
-
-    seg.setInputCloud(cloud_filtered_);
-    seg.segment(*inliers, *coefficients);
-
-    Eigen::Vector3d norm;
-    if (coefficients->values.size() > 0)
-    {
-      std::cout << "Model coefficients: " << coefficients->values[0] << " " << coefficients->values[1] << " "
-                << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
-      norm[0] = coefficients->values[0];
-      norm[1] = coefficients->values[1];
-      norm[2] = coefficients->values[2];
-      z_plane = -coefficients->values[3];
-    }
-
-    if (inliers->indices.size() != 0)
-    {
-      extract.setInputCloud(cloud_filtered_);
-      extract.setIndices(inliers);
-      extract.setNegative(false);
-      extract.filter(*cloud_p_);
-
-      extract.setNegative(true);
-      extract.filter(*cloud_f);
-      cloud_filtered_.swap(cloud_f);
-    }
-
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
-    ne.setInputCloud(cloud_p_);
-
-    // Create an empty kdtree representation, and pass it to the normal estimation
-    // object. Its content will be filled inside the object, based on the given
-    // input dataset (as no other search surface is given).
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
-    ne.setSearchMethod(tree);
-
-    // Output datasets
-    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
-
-    // Use all neighbors in a sphere of radius 3cm
-    ne.setRadiusSearch(0.03);
-
-    // Compute the features
-    ne.compute(*cloud_normals);
-
-    if (cloud_p_->points.size() > 0)
-    {
-      // ROTATION
-      double n = cloud_p_->points.size();
-      Eigen::Vector3d normal1 = Eigen::Vector3d(0, 0, 1);
-
-      Eigen::Vector3d axis = normal1.cross(norm);
-      double angle = -acos(normal1.dot(norm));
-      axis = axis.normalized();
-      Eigen::Affine3d transform_2 = Eigen::Affine3d::Identity();
-      transform_2.rotate(Eigen::AngleAxisd(angle, axis));
-
-      rotation = transform_2;
-      Eigen::Vector3d normal2(norm);
-      Eigen::Quaterniond quat = Eigen::Quaterniond::FromTwoVectors(normal1, normal2);
-      Eigen::Matrix3d R = quat.normalized().toRotationMatrix();
-      Eigen::Matrix3d R2 = R.inverse();
-
-      pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-
-      pcl::transformPointCloud(*cloud_p_, *transformed_cloud, transform_2);
-      pcl::copyPointCloud(*transformed_cloud, *cloud_c);
-      cloud_p_ = transformed_cloud;
     }
   }
 
@@ -542,37 +445,6 @@ namespace hole_detection
     match.push_back(contour_temp);
   }
 
-  void HoleDetection::findInMap(pcl::PointXYZ &p1, pcl::PointXYZ &p2, cv::Point p_max, cv::Point p_min)
-  {
-    // Find 2d points in map
-    // should be optimized
-    // can also be done by approximate calculation back to 3d again
-
-    double diff_bench_max = 100;
-    double diff_bench_min = 100;
-
-    for (const auto &pair : map_)
-    {
-      double diff_max = sqrt(pow(pair.first.first - p_max.x, 2) + pow(pair.first.second - p_max.y, 2));
-      double diff_min = sqrt(pow(pair.first.first - p_min.x, 2) + pow(pair.first.second - p_min.y, 2));
-
-      if (diff_bench_max > diff_max)
-      {
-        diff_bench_max = diff_max;
-        p1.x = pair.second.x;
-        p1.y = pair.second.y;
-        p1.z = pair.second.z;
-      }
-      if (diff_bench_min > diff_min)
-      {
-        diff_bench_min = diff_min;
-        p2.x = pair.second.x;
-        p2.y = pair.second.y;
-        p2.z = pair.second.z;
-      }
-    }
-  }
-
   void HoleDetection::createImage(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, cv::Mat &image, double z_plane)
   {
     const std::lock_guard<std::mutex> lock(g_i_mutex);
@@ -580,7 +452,6 @@ namespace hole_detection
 
     double resolution = 1 / fx_;
 
-    map_ = std::map<std::pair<int, int>, pcl::PointXYZ>();
     float xmin = VTK_FLOAT_MAX;
     float xmax = VTK_FLOAT_MIN;
     float ymin = VTK_FLOAT_MAX;
@@ -691,7 +562,7 @@ namespace hole_detection
     int error_count = 0;
     int j = 0;
     double total_sum = 0;
-    // std::cout << "error " << error << std::endl;
+
     // check difference angle
     double diff_angle = angle - hole.angle;
     int best_good = INT_MIN;
@@ -741,33 +612,7 @@ namespace hole_detection
       }
     }
     double rot_angle = diff_angle * M_PI / 180.0;
-    std::cout << "good " << best_good << " " << contour.size() << " " << bs << std::endl;
     return static_cast<double>(best_good) / static_cast<double>(contour.size());
-  }
-
-  bool HoleDetection::getAngle(std::vector<cv::Point> pts)
-  {
-    int sz = static_cast<int>(pts.size());
-    cv::Mat data_pts = cv::Mat(sz, 2, CV_64F);
-    for (int i = 0; i < pts.size(); i++)
-    {
-      data_pts.at<double>(i, 0) = pts[i].x;
-      data_pts.at<double>(i, 1) = pts[i].y;
-    }
-
-    cv::PCA pca_analysis(data_pts, cv::Mat(), cv::PCA::DATA_AS_ROW);
-    cv::Point cntr = cv::Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)),
-                               static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
-    // Store the eigenvalues and eigenvectors
-    std::vector<cv::Point2d> eigen_vecs(2);
-    std::vector<double> eigen_val(2);
-    for (int i = 0; i < 2; i++)
-    {
-      eigen_vecs[i] = cv::Point2d(pca_analysis.eigenvectors.at<double>(i, 0), pca_analysis.eigenvectors.at<double>(i, 1));
-      eigen_val[i] = pca_analysis.eigenvalues.at<double>(i);
-    }
-    double angle = atan2(eigen_vecs[0].y, eigen_vecs[0].x); // orientation in radians
-    return false;
   }
 
   void HoleDetection::publishHole(Eigen::Vector3d &point, double angle, int type, Eigen::Vector3d &plane_normal)
