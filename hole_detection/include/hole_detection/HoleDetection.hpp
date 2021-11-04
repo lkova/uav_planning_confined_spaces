@@ -43,122 +43,113 @@
 
 namespace hole_detection
 {
-class HoleDetection
-{
-public:
-  HoleDetection();
-
-  virtual ~HoleDetection();
-
-  void setCloud(const pcl::PCLPointCloud2 &cloud_msg);
-
-  pcl::PointXYZ getHoleCoordinates(bool &found);
-  std::vector<std::vector<Eigen::Vector3d>> getHoleTargetFrame();
-  std::vector<hole_detection::Hole> getHolesMessage();
-  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> getClouds();
-  bool isPointUpdated();
-  void loadAllTemplates();
-
-  bool pub;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_p_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_c;
-
-  bool debug_;
-  bool is_front_;
-  double fx_;
-  double fy_;
-  double cx_;
-  double cy_;
-  bool ismynteye_;
-  int obrisi_;
-  float bias_;
-  std::string manhole_path_;
-  std::string big_hole_path_;
-
-private:
-  struct Template
+  class HoleDetection
   {
-    Eigen::VectorXd tempx;
-    Eigen::VectorXd tempy;
-    double angle;
-    double scale_x;
+  public:
+    HoleDetection();
+
+    virtual ~HoleDetection();
+
+    void setCloud(const pcl::PCLPointCloud2 &cloud_msg);
+
+    pcl::PointXYZ getHoleCoordinates(bool &found);
+    std::vector<std::vector<Eigen::Vector3d>> getHoleTargetFrame();
+    std::vector<hole_detection::Hole> getHolesMessage();
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> getClouds();
+    bool isPointUpdated();
+    void loadAllTemplates();
+
+    bool pub;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_p_;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_c;
+
+    bool debug_;
+    bool is_front_;
+    double fx_;
+    double fy_;
+    double cx_;
+    double cy_;
+    bool ismynteye_;
+    float bias_;
+    std::string manhole_path_;
+    std::string big_hole_path_;
+
+  private:
+    struct Template
+    {
+      Eigen::VectorXd tempx;
+      Eigen::VectorXd tempy;
+      double angle;
+      double scale_x;
+    };
+
+    struct Plane
+    {
+      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
+      Eigen::Affine3d R;
+      double z_plane;
+      Eigen::Vector3d normal;
+    };
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr loadCloudData(const pcl::PCLPointCloud2 &cloud_msg);
+
+    void planeSegmentation(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double &z_plane, Eigen::Affine3d &rotation);
+
+    void multiPlaneSegmentation(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<Plane> &planes);
+
+    void filterCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+
+    void createImage(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, cv::Mat &image, double z_plane);
+
+    void publishHole(Eigen::Vector3d &point, double angle, int type, Eigen::Vector3d &plane_normal);
+    cv::Point2d projectCloudTo2d(const pcl::PointXYZ xyz, double min_x, double min_y, double resolution, double z_plane);
+
+    void findInMap(pcl::PointXYZ &p1, pcl::PointXYZ &p2, cv::Point p_max, cv::Point p_min);
+    bool findDifference(std::vector<cv::Point> curve);
+    void findCurveInMap(std::vector<cv::Point> &curve);
+    void deleteFunction(std::vector<cv::Point> curve);
+    bool getAngle(std::vector<cv::Point> pts);
+    void multiTest();
+    void findHole(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double z_plane, Eigen::Affine3d rotation, bool &found,
+                  Eigen::Vector3d &plane_normal);
+
+    std::vector<std::vector<cv::Point2f>> project2dToCloud(std::vector<cv::Point> contour);
+    void visualizeMatch(const std::vector<cv::Point> &contour, const Template &hole,
+                        std::vector<std::vector<cv::Point>> &match, double z_plane);
+
+    double matchShapes(std::vector<cv::Point> contour, Template &hole, double z_plane);
+
+    bool checkFreeSpace(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointXYZ hole);
+    void biggestDist(std::vector<cv::Point> contour);
+
+    void loadTemplate();
+    void loadTemplateBigHole();
+    // visualization function
+    void holeToTargetFrame(std::vector<cv::Point> contour, double z_plane, Eigen::Affine3d R);
+
+    pcl::PointXYZ hole_local_coordinates_;
+
+    bool is_point_updated;
+    int imgw_;
+    int imgh_;
+    double yyy_;
+    double xxx_;
+    int scale_it_;
+    int kernel_size_;
+
+    std::mutex g_i_mutex;
+    std::vector<cv::Point> template_contour_;
+    std::map<std::pair<int, int>, pcl::PointXYZ> map_;
+    uint kernel_resolution_;
+    bool defined_;
+
+    Template hole_circle_;
+    Template hole_big_;
+    std::vector<std::vector<Eigen::Vector3d>> hole_results_;
+
+    std::vector<hole_detection::Hole> hole_msgs_;
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds_;
   };
-
-  struct Plane
-  {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
-    Eigen::Affine3d R;
-    double z_plane;
-    Eigen::Vector3d normal;
-  };
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr loadCloudData(const pcl::PCLPointCloud2 &cloud_msg);
-
-  void planeSegmentation(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double &z_plane, Eigen::Affine3d &rotation);
-
-  void multiPlaneSegmentation(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<Plane> &planes);
-
-  void filterCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
-
-  void createImage(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, cv::Mat &image, double z_plane);
-
-  void publishHole(Eigen::Vector3d &point, double angle, int type, Eigen::Vector3d &plane_normal);
-  cv::Point2d projectCloudTo2d(const pcl::PointXYZ xyz, double min_x, double min_y, double resolution, double z_plane);
-
-  void findInMap(pcl::PointXYZ &p1, pcl::PointXYZ &p2, cv::Point p_max, cv::Point p_min);
-  bool findDifference(std::vector<cv::Point> curve);
-  void findCurveInMap(std::vector<cv::Point> &curve);
-  void deleteFunction(std::vector<cv::Point> curve);
-  bool getAngle(std::vector<cv::Point> pts);
-  void multiTest();
-  void findHole(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double z_plane, Eigen::Affine3d rotation, bool &found,
-                Eigen::Vector3d &plane_normal);
-
-  std::vector<std::vector<cv::Point2f>> project2dToCloud(std::vector<cv::Point> contour);
-  void visualizeMatch(const std::vector<cv::Point> &contour, const Template &hole,
-                      std::vector<std::vector<cv::Point>> &match, double z_plane);
-
-  double matchShapes(std::vector<cv::Point> contour, Template &hole, double z_plane);
-
-  bool checkFreeSpace(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointXYZ hole);
-  void biggestDist(std::vector<cv::Point> contour);
-
-  void loadTemplate();
-  void loadTemplateBigHole();
-  // visualization function
-  void holeToTargetFrame(std::vector<cv::Point> contour, double z_plane, Eigen::Affine3d R);
-
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
-  pcl::PointXYZ hole_local_coordinates_;
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_;
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_p_;
-  // double z_plane;
-  bool is_point_updated;
-  int imgw_;
-  int imgh_;
-  double yyy_;
-  double xxx_;
-  int scale_it_;
-  // Eigen::Affine3d rotation_;
-  int kernel_size_;
-
-  std::mutex g_i_mutex;
-  // Eigen::VectorXd tempx;
-  // Eigen::VectorXd tempy;
-  // Eigen::VectorXd template_x_big_;
-  // Eigen::VectorXd template_y_big_;
-  std::vector<cv::Point> template_contour_;
-  std::map<std::pair<int, int>, pcl::PointXYZ> map_;
-  uint kernel_resolution_;
-  bool defined_;
-
-  Template hole_circle_;
-  Template hole_big_;
-  std::vector<std::vector<Eigen::Vector3d>> hole_results_;
-
-  std::vector<hole_detection::Hole> hole_msgs_;
-  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds_;
-};
-}  // namespace hole_detection
+} // namespace hole_detection
